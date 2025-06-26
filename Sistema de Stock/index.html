@@ -9,8 +9,9 @@
 <body>
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <a href="#" class="nav-link active" data-view="agregar">Agregar Productos</a>
-        <a href="#" class="nav-link" data-view="stock">Ver Stock</a>
+        <button class="nav-btn" data-view="ventas">Realizar Ventas</button>
+        <button class="nav-btn" data-view="agregar">Agregar Productos</button>
+        <button class="nav-btn" data-view="stock">Control de Stock</button>
     </div>
 
     <header>
@@ -19,6 +20,41 @@
     </header>
 
     <main>
+        <!-- Agregar después de las otras secciones en el <main> -->
+        <section id="ventasSection" class="content-section" style="display: none;">
+            <h2>Realizar Venta</h2>
+            <div class="venta-container">
+                <div class="scanner-section">
+                    <div class="form-group">
+                        <label for="codigoProducto">Escanear Código de Producto:</label>
+                        <input type="text" id="codigoProducto" placeholder="Ingrese o escanee el código..." autofocus>
+                    </div>
+                </div>
+                
+                <div class="venta-actual">
+                    <h3>Venta Actual</h3>
+                    <div class="tabla-container">
+                        <table id="tablaVenta">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Cantidad</th>
+                                    <th>Subtotal</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="venta-total">
+                        <h3>Total: $<span id="totalVenta">0.00</span></h3>
+                        <button id="confirmarVenta" class="btn-primary">Confirmar Venta</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
         <section id="agregarSection" class="content-section">
             <h2>Agregar Nuevo Producto</h2>
             <form id="productoForm">
@@ -50,6 +86,8 @@
                 <button type="submit" class="btn-primary">Agregar Producto</button>
             </form>
         </section>
+
+        
 
         <section id="stockSection" class="content-section" style="display: none;">
             <h2>Stock Actual</h2>

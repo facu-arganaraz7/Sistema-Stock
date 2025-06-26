@@ -349,3 +349,80 @@ th {
 .tabla-container tr:hover {
     background-color: #f5f5f5;
 }
+.nav-btn {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 8px 8px 8px 32px;
+    font-size: 18px;
+    color: #f1f1f1;
+    display: block;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.nav-btn:hover {
+    color: var(--color-primary);
+}
+
+.nav-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+/* Estilos para la sección de ventas */
+.venta-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.scanner-section {
+    margin-bottom: 2rem;
+}
+
+#codigoProducto {
+    font-size: 1.2rem;
+    padding: 0.8rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+.venta-actual {
+    background-color: var(--color-light);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.venta-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 2px solid #eee;
+}
+
+.venta-total h3 {
+    font-size: 1.5rem;
+    color: var(--color-primary);
+}
+
+.cantidad-input {
+    width: 80px;
+    padding: 0.5rem;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.btn-eliminar-producto {
+    background-color: var(--color-danger);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

@@ -7,12 +7,17 @@ function closeNav() {
     document.getElementById("mySidenav").style.width = "0";
 }
 
+// Exponer funciones al ámbito global para que funcionen con onclick en HTML
+window.openNav = openNav;
+window.closeNav = closeNav;
+
 // Clase para manejar los productos
 class ProductoManager {
     constructor() {
         this.productos = JSON.parse(localStorage.getItem('productos')) || this.obtenerProductosEjemplo();
         this.initEventListeners();
         this.actualizarTablas();
+        this.ventaManager = new VentaManager(this);
     }
 
     obtenerProductosEjemplo() {
@@ -86,12 +91,11 @@ class ProductoManager {
 
     initEventListeners() {
         // Navegación
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                this.mostrarSeccion(link.dataset.view);
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.mostrarSeccion(btn.dataset.view);
                 closeNav();
             });
         });
@@ -117,6 +121,7 @@ class ProductoManager {
     mostrarSeccion(view) {
         document.getElementById('agregarSection').style.display = view === 'agregar' ? 'block' : 'none';
         document.getElementById('stockSection').style.display = view === 'stock' ? 'block' : 'none';
+        document.getElementById('ventasSection').style.display = view === 'ventas' ? 'block' : 'none';
     }
 
     agregarProducto() {
@@ -219,5 +224,134 @@ class ProductoManager {
     }
 }
 
-// Inicializar el manager de productos
+class VentaManager {
+    constructor(productoManager) {
+        this.productoManager = productoManager;
+        this.ventaActual = [];
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        const inputCodigo = document.getElementById('codigoProducto');
+        inputCodigo.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.procesarCodigo(inputCodigo.value);
+                inputCodigo.value = '';
+            }
+        });
+
+        document.getElementById('confirmarVenta').addEventListener('click', () => {
+            this.confirmarVenta();
+        });
+    }
+
+    procesarCodigo(codigo) {
+        const producto = this.productoManager.productos.find(p => p.id.toString() === codigo);
+        if (producto) {
+            if (producto.stock > 0) {
+                this.agregarProductoAVenta(producto);
+            } else {
+                alert('Producto sin stock disponible');
+            }
+        } else {
+            alert('Producto no encontrado');
+        }
+    }
+
+    agregarProductoAVenta(producto) {
+        const itemExistente = this.ventaActual.find(item => item.id === producto.id);
+        if (itemExistente) {
+            if (itemExistente.cantidad < producto.stock) {
+                itemExistente.cantidad++;
+                itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio;
+            } else {
+                alert('Stock insuficiente');
+                return;
+            }
+        } else {
+            this.ventaActual.push({
+                id: producto.id,
+                nombre: producto.nombre,
+                precio: producto.precio,
+                cantidad: 1,
+                subtotal: producto.precio
+            });
+        }
+        this.actualizarTablaVenta();
+    }
+
+    actualizarCantidad(id, nuevaCantidad) {
+        const item = this.ventaActual.find(item => item.id === id);
+        const producto = this.productoManager.productos.find(p => p.id === id);
+        
+        if (nuevaCantidad > producto.stock) {
+            alert('Stock insuficiente');
+            return;
+        }
+
+        if (nuevaCantidad <= 0) {
+            this.eliminarProducto(id);
+            return;
+        }
+
+        item.cantidad = nuevaCantidad;
+        item.subtotal = item.cantidad * item.precio;
+        this.actualizarTablaVenta();
+    }
+
+    eliminarProducto(id) {
+        this.ventaActual = this.ventaActual.filter(item => item.id !== id);
+        this.actualizarTablaVenta();
+    }
+
+    actualizarTablaVenta() {
+        const tbody = document.querySelector('#tablaVenta tbody');
+        tbody.innerHTML = '';
+        let total = 0;
+
+        this.ventaActual.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.nombre}</td>
+                <td>$${item.precio.toFixed(2)}</td>
+                <td>
+                    <input type="number" class="cantidad-input" value="${item.cantidad}"
+                           min="1" onchange="ventaManager.actualizarCantidad(${item.id}, parseInt(this.value))">
+                </td>
+                <td>$${item.subtotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn-eliminar-producto" onclick="ventaManager.eliminarProducto(${item.id})">
+                        Eliminar
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            total += item.subtotal;
+        });
+
+        document.getElementById('totalVenta').textContent = total.toFixed(2);
+    }
+
+    confirmarVenta() {
+        if (this.ventaActual.length === 0) {
+            alert('No hay productos en la venta actual');
+            return;
+        }
+
+        this.ventaActual.forEach(item => {
+            const producto = this.productoManager.productos.find(p => p.id === item.id);
+            producto.stock -= item.cantidad;
+        });
+
+        this.productoManager.guardarEnStorage();
+        this.productoManager.actualizarTablas();
+        this.ventaActual = [];
+        this.actualizarTablaVenta();
+
+        alert('Venta realizada con éxito');
+    }
+}
+
+// Inicialización
 const productoManager = new ProductoManager();
+const ventaManager = productoManager.ventaManager;
