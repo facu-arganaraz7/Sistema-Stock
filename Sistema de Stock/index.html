@@ -61,15 +61,16 @@
                 <div class="form-group">
                     <label for="categoria">Categoría:</label>
                     <select id="categoria" required>
-                        <option value="Bebidas">Bebidas</option>
-                        <option value="Golosinas">Golosinas</option>
-                        <option value="Snacks">Snacks</option>
-                        <option value="Cigarrillos">Cigarrillos</option>
+                        <!-- Las opciones se cargarán dinámicamente desde la API -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="codigo">Código:</label>
+                    <input type="text" id="codigo" placeholder="Código único del producto" required>
                 </div>
                 <div class="form-group">
                     <label for="detalle">Detalle:</label>
@@ -92,23 +93,8 @@
         <section id="stockSection" class="content-section" style="display: none;">
             <h2>Stock Actual</h2>
             <div class="stock-container">
-                <div class="stock-tables">
-                    <div class="table-wrapper">
-                        <h3>Bebidas</h3>
-                        <div id="tablaBebidas" class="tabla-container"></div>
-                    </div>
-                    <div class="table-wrapper">
-                        <h3>Golosinas</h3>
-                        <div id="tablaGolosinas" class="tabla-container"></div>
-                    </div>
-                    <div class="table-wrapper">
-                        <h3>Snacks</h3>
-                        <div id="tablaSnacks" class="tabla-container"></div>
-                    </div>
-                    <div class="table-wrapper">
-                        <h3>Cigarrillos</h3>
-                        <div id="tablaCigarrillos" class="tabla-container"></div>
-                    </div>
+                <div id="stock-tables" class="stock-tables">
+                    <!-- Las tablas de categorías se generarán dinámicamente -->
                 </div>
             </div>
         </section>
@@ -124,15 +110,16 @@
                 <div class="form-group">
                     <label for="editCategoria">Categoría:</label>
                     <select id="editCategoria" required>
-                        <option value="Bebidas">Bebidas</option>
-                        <option value="Golosinas">Golosinas</option>
-                        <option value="Snacks">Snacks</option>
-                        <option value="Cigarrillos">Cigarrillos</option>
+                        <!-- Las opciones se cargarán dinámicamente desde la API -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="editNombre">Nombre:</label>
                     <input type="text" id="editNombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCodigo">Código:</label>
+                    <input type="text" id="editCodigo" placeholder="Código único del producto" required>
                 </div>
                 <div class="form-group">
                     <label for="editDetalle">Detalle:</label>

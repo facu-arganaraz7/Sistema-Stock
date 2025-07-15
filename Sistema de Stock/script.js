@@ -1,3 +1,6 @@
+// Configuración de la API
+const API_BASE_URL = 'http://localhost:8000/api';
+
 // Funciones para el sidenav
 function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
@@ -11,82 +14,157 @@ function closeNav() {
 window.openNav = openNav;
 window.closeNav = closeNav;
 
+// Función para mostrar la sección de ventas al iniciar
+function mostrarVentasInicial() {
+    // Activar el botón de ventas en el menú
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.nav-btn[data-view="ventas"]').classList.add('active');
+    
+    // Mostrar la sección de ventas y ocultar las demás
+    document.getElementById('agregarSection').style.display = 'none';
+    document.getElementById('stockSection').style.display = 'none';
+    document.getElementById('ventasSection').style.display = 'block';
+}
+
+// Funciones de utilidad para la API
+const api = {
+    async get(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`);
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en GET:', error);
+            throw error;
+        }
+    },
+
+    async post(endpoint, data) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en POST:', error);
+            throw error;
+        }
+    },
+
+    async put(endpoint, data) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en PUT:', error);
+            throw error;
+        }
+    },
+
+    async delete(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error en DELETE:', error);
+            throw error;
+        }
+    }
+};
+
 // Clase para manejar los productos
 class ProductoManager {
     constructor() {
-        this.productos = JSON.parse(localStorage.getItem('productos')) || this.obtenerProductosEjemplo();
+        this.productos = [];
+        this.categorias = [];
         this.initEventListeners();
-        this.actualizarTablas();
+        this.cargarDatos();
         this.ventaManager = new VentaManager(this);
     }
 
-    obtenerProductosEjemplo() {
-        return [
-            {
-                id: 1,
-                categoria: 'Bebidas',
-                nombre: 'Coca-Cola',
-                detalle: 'Gaseosa 500ml - Botella de plástico',
-                precio: 850.00,
-                stock: 24
-            },
-            {
-                id: 2,
-                categoria: 'Bebidas',
-                nombre: 'Agua Mineral',
-                detalle: 'Agua sin gas 1L - Botella de plástico',
-                precio: 500.00,
-                stock: 3
-            },
-            {
-                id: 3,
-                categoria: 'Golosinas',
-                nombre: 'Alfajor Milka',
-                detalle: 'Alfajor triple de chocolate con mousse',
-                precio: 750.00,
-                stock: 15
-            },
-            {
-                id: 4,
-                categoria: 'Golosinas',
-                nombre: 'Caramelos Sugus',
-                detalle: 'Bolsa de caramelos masticables surtidos 150g',
-                precio: 600.00,
-                stock: 4
-            },
-            {
-                id: 5,
-                categoria: 'Snacks',
-                nombre: 'Papas Lays',
-                detalle: 'Papas fritas clásicas 95g',
-                precio: 950.00,
-                stock: 8
-            },
-            {
-                id: 6,
-                categoria: 'Snacks',
-                nombre: 'Maní con chocolate',
-                detalle: 'Maní japonés cubierto con chocolate 100g',
-                precio: 700.00,
-                stock: 2
-            },
-            {
-                id: 7,
-                categoria: 'Cigarrillos',
-                nombre: 'Marlboro Box 20',
-                detalle: 'Cigarrillos Marlboro Box 20 unidades',
-                precio: 1200.00,
-                stock: 12
-            },
-            {
-                id: 8,
-                categoria: 'Cigarrillos',
-                nombre: 'Lucky Strike',
-                detalle: 'Cigarrillos Lucky Strike mentolados 20 unidades',
-                precio: 1100.00,
-                stock: 4
+    async cargarDatos() {
+        try {
+            await this.cargarCategorias();
+            await this.cargarProductos();
+            this.actualizarTablas();
+        } catch (error) {
+            console.error('Error al cargar datos:', error);
+            alert('Error al conectar con el servidor. Verifica que esté ejecutándose.');
+        }
+    }
+
+    async cargarCategorias() {
+        try {
+            this.categorias = await api.get('/categorias');
+            this.actualizarSelectsCategorias();
+            this.generarSeccionesCategorias();
+        } catch (error) {
+            console.error('Error al cargar categorías:', error);
+        }
+    }
+
+    generarSeccionesCategorias() {
+        const stockTablesContainer = document.getElementById('stock-tables');
+        if (stockTablesContainer) {
+            stockTablesContainer.innerHTML = '';
+            
+            this.categorias.forEach(categoria => {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'table-wrapper';
+                categorySection.innerHTML = `
+                    <h3>${categoria.nombre}</h3>
+                    <div id="tabla${categoria.nombre}" class="tabla-container"></div>
+                `;
+                stockTablesContainer.appendChild(categorySection);
+            });
+        }
+    }
+
+    async cargarProductos() {
+        try {
+            this.productos = await api.get('/productos');
+        } catch (error) {
+            console.error('Error al cargar productos:', error);
+        }
+    }
+
+    actualizarSelectsCategorias() {
+        const selects = ['categoria', 'editCategoria'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '';
+                this.categorias.forEach(categoria => {
+                    const option = document.createElement('option');
+                    option.value = categoria.id;
+                    option.textContent = categoria.nombre;
+                    select.appendChild(option);
+                });
             }
-        ];
+        });
     }
 
     initEventListeners() {
@@ -122,29 +200,60 @@ class ProductoManager {
         document.getElementById('agregarSection').style.display = view === 'agregar' ? 'block' : 'none';
         document.getElementById('stockSection').style.display = view === 'stock' ? 'block' : 'none';
         document.getElementById('ventasSection').style.display = view === 'ventas' ? 'block' : 'none';
+        
+        if (view === 'stock') {
+            this.cargarProductos().then(() => this.actualizarTablas());
+        }
     }
 
-    agregarProducto() {
-        const producto = {
-            id: Date.now(),
-            categoria: document.getElementById('categoria').value,
-            nombre: document.getElementById('nombre').value,
-            detalle: document.getElementById('detalle').value,
-            precio: parseFloat(document.getElementById('precio').value),
-            stock: parseInt(document.getElementById('stock').value)
-        };
+    async agregarProducto() {
+        try {
+            const producto = {
+                nombre: document.getElementById('nombre').value,
+                codigo: document.getElementById('codigo').value,
+                categoria_id: parseInt(document.getElementById('categoria').value),
+                precio: parseFloat(document.getElementById('precio').value),
+                detalle: document.getElementById('detalle').value,
+                stock_minimo: 0
+            };
 
-        this.productos.push(producto);
-        this.guardarEnStorage();
-        this.actualizarTablas();
-        document.getElementById('productoForm').reset();
-    }
+            await api.post('/productos', producto);
+            
+            // Registrar stock inicial
+            const stockInicial = parseInt(document.getElementById('stock').value);
+            if (stockInicial > 0) {
+                // Primero obtener el producto recién creado para obtener su ID
+                await this.cargarProductos();
+                const productoCreado = this.productos.find(p => p.codigo === producto.codigo);
+                if (productoCreado) {
+                    await api.post('/movimientos/entrada', {
+                        producto_id: productoCreado.id,
+                        cantidad: stockInicial
+                    });
+                }
+            }
 
-    eliminarProducto(id) {
-        if (confirm('¿Está seguro de que desea eliminar este producto?')) {
-            this.productos = this.productos.filter(p => p.id !== id);
-            this.guardarEnStorage();
+            document.getElementById('productoForm').reset();
+            await this.cargarProductos();
             this.actualizarTablas();
+            alert('Producto agregado exitosamente');
+        } catch (error) {
+            console.error('Error al agregar producto:', error);
+            alert('Error al agregar producto: ' + error.message);
+        }
+    }
+
+    async eliminarProducto(id) {
+        if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+            try {
+                await api.delete(`/productos/${id}`);
+                await this.cargarProductos();
+                this.actualizarTablas();
+                alert('Producto eliminado exitosamente');
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                alert('Error al eliminar producto: ' + error.message);
+            }
         }
     }
 
@@ -152,44 +261,68 @@ class ProductoManager {
         const producto = this.productos.find(p => p.id === id);
         if (producto) {
             document.getElementById('editId').value = producto.id;
-            document.getElementById('editCategoria').value = producto.categoria;
+            document.getElementById('editCategoria').value = producto.categoria_id;
             document.getElementById('editNombre').value = producto.nombre;
+            document.getElementById('editCodigo').value = producto.codigo;
             document.getElementById('editDetalle').value = producto.detalle;
             document.getElementById('editPrecio').value = producto.precio;
-            document.getElementById('editStock').value = producto.stock;
+            document.getElementById('editStock').value = producto.stock_actual;
             document.getElementById('modalEditar').style.display = 'block';
         }
     }
 
-    guardarEdicion() {
-        const id = parseInt(document.getElementById('editId').value);
-        const index = this.productos.findIndex(p => p.id === id);
-
-        if (index !== -1) {
-            this.productos[index] = {
-                id: id,
-                categoria: document.getElementById('editCategoria').value,
+    async guardarEdicion() {
+        try {
+            const id = parseInt(document.getElementById('editId').value);
+            const producto = {
                 nombre: document.getElementById('editNombre').value,
-                detalle: document.getElementById('editDetalle').value,
+                codigo: document.getElementById('editCodigo').value,
+                categoria_id: parseInt(document.getElementById('editCategoria').value),
                 precio: parseFloat(document.getElementById('editPrecio').value),
-                stock: parseInt(document.getElementById('editStock').value)
+                detalle: document.getElementById('editDetalle').value,
+                stock_minimo: 0
             };
 
-            this.guardarEnStorage();
+            await api.put(`/productos/${id}`, producto);
+            
+            // Actualizar stock si es necesario
+            const stockActual = this.productos.find(p => p.id === id)?.stock_actual || 0;
+            const nuevoStock = parseInt(document.getElementById('editStock').value);
+            
+            if (nuevoStock !== stockActual) {
+                const diferencia = nuevoStock - stockActual;
+                if (diferencia > 0) {
+                    await api.post('/movimientos/entrada', {
+                        producto_id: id,
+                        cantidad: diferencia
+                    });
+                } else if (diferencia < 0) {
+                    await api.post('/movimientos/salida', {
+                        producto_id: id,
+                        cantidad: Math.abs(diferencia)
+                    });
+                }
+            }
+
+            await this.cargarProductos();
             this.actualizarTablas();
             document.getElementById('modalEditar').style.display = 'none';
+            alert('Producto actualizado exitosamente');
+        } catch (error) {
+            console.error('Error al actualizar producto:', error);
+            alert('Error al actualizar producto: ' + error.message);
         }
     }
 
     actualizarTablas() {
-        const categorias = ['Bebidas', 'Golosinas', 'Snacks', 'Cigarrillos'];
-        
-        categorias.forEach(categoria => {
-            const productosFiltrados = this.productos.filter(p => p.categoria === categoria);
+        // Usar las categorías cargadas desde la base de datos
+        this.categorias.forEach(categoria => {
+            const productosFiltrados = this.productos.filter(p => p.categoria === categoria.nombre);
             const tabla = `
                 <table>
                     <thead>
                         <tr>
+                            <th>Código</th>
                             <th>Nombre</th>
                             <th>Detalle</th>
                             <th>Precio</th>
@@ -200,10 +333,11 @@ class ProductoManager {
                     <tbody>
                         ${productosFiltrados.map(p => `
                             <tr>
+                                <td>${p.codigo}</td>
                                 <td>${p.nombre}</td>
                                 <td>${p.detalle}</td>
-                                <td>$${p.precio.toFixed(2)}</td>
-                                <td class="${p.stock < 5 ? 'stock-bajo' : ''}">${p.stock}</td>
+                                <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                                <td class="${(p.stock_actual || 0) < 5 ? 'stock-bajo' : ''}">${p.stock_actual || 0}</td>
                                 <td>
                                     <button class="btn-editar" onclick="productoManager.abrirEditar(${p.id})">Editar</button>
                                     <button class="btn-eliminar" onclick="productoManager.eliminarProducto(${p.id})">Eliminar</button>
@@ -214,13 +348,13 @@ class ProductoManager {
                 </table>
             `;
 
-            document.getElementById(`tabla${categoria}`).innerHTML = 
-                productosFiltrados.length ? tabla : '<p>No hay productos en esta categoría</p>';
+            // Buscar el elemento por el nombre de la categoría
+            const tablaElement = document.getElementById(`tabla${categoria.nombre}`);
+            if (tablaElement) {
+                tablaElement.innerHTML = 
+                    productosFiltrados.length ? tabla : '<p>No hay productos en esta categoría</p>';
+            }
         });
-    }
-
-    guardarEnStorage() {
-        localStorage.setItem('productos', JSON.stringify(this.productos));
     }
 }
 
@@ -245,23 +379,25 @@ class VentaManager {
         });
     }
 
-    procesarCodigo(codigo) {
-        const producto = this.productoManager.productos.find(p => p.id.toString() === codigo);
-        if (producto) {
-            if (producto.stock > 0) {
+    async procesarCodigo(codigo) {
+        try {
+            const producto = await api.get(`/productos/codigo/${codigo}`);
+            if (producto.stock_actual > 0) {
                 this.agregarProductoAVenta(producto);
             } else {
                 alert('Producto sin stock disponible');
             }
-        } else {
+        } catch (error) {
+            console.error('Error al buscar producto:', error);
             alert('Producto no encontrado');
         }
     }
 
     agregarProductoAVenta(producto) {
+        const precio = parseFloat(producto.precio || 0);
         const itemExistente = this.ventaActual.find(item => item.id === producto.id);
         if (itemExistente) {
-            if (itemExistente.cantidad < producto.stock) {
+            if (itemExistente.cantidad < producto.stock_actual) {
                 itemExistente.cantidad++;
                 itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio;
             } else {
@@ -272,9 +408,9 @@ class VentaManager {
             this.ventaActual.push({
                 id: producto.id,
                 nombre: producto.nombre,
-                precio: producto.precio,
+                precio: precio,
                 cantidad: 1,
-                subtotal: producto.precio
+                subtotal: precio
             });
         }
         this.actualizarTablaVenta();
@@ -284,7 +420,7 @@ class VentaManager {
         const item = this.ventaActual.find(item => item.id === id);
         const producto = this.productoManager.productos.find(p => p.id === id);
         
-        if (nuevaCantidad > producto.stock) {
+        if (nuevaCantidad > producto.stock_actual) {
             alert('Stock insuficiente');
             return;
         }
@@ -313,12 +449,12 @@ class VentaManager {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${item.nombre}</td>
-                <td>$${item.precio.toFixed(2)}</td>
+                <td>$${parseFloat(item.precio || 0).toFixed(2)}</td>
                 <td>
                     <input type="number" class="cantidad-input" value="${item.cantidad}"
                            min="1" onchange="ventaManager.actualizarCantidad(${item.id}, parseInt(this.value))">
                 </td>
-                <td>$${item.subtotal.toFixed(2)}</td>
+                <td>$${parseFloat(item.subtotal || 0).toFixed(2)}</td>
                 <td>
                     <button class="btn-eliminar-producto" onclick="ventaManager.eliminarProducto(${item.id})">
                         Eliminar
@@ -326,32 +462,46 @@ class VentaManager {
                 </td>
             `;
             tbody.appendChild(tr);
-            total += item.subtotal;
+            total += parseFloat(item.subtotal || 0);
         });
 
         document.getElementById('totalVenta').textContent = total.toFixed(2);
     }
 
-    confirmarVenta() {
+    async confirmarVenta() {
         if (this.ventaActual.length === 0) {
             alert('No hay productos en la venta actual');
             return;
         }
 
-        this.ventaActual.forEach(item => {
-            const producto = this.productoManager.productos.find(p => p.id === item.id);
-            producto.stock -= item.cantidad;
-        });
+        try {
+            const productos = this.ventaActual.map(item => ({
+                producto_id: item.id,
+                cantidad: item.cantidad
+            }));
 
-        this.productoManager.guardarEnStorage();
-        this.productoManager.actualizarTablas();
-        this.ventaActual = [];
-        this.actualizarTablaVenta();
+            await api.post('/ventas', { productos });
 
-        alert('Venta realizada con éxito');
+            this.ventaActual = [];
+            this.actualizarTablaVenta();
+            await this.productoManager.cargarProductos();
+            this.productoManager.actualizarTablas();
+
+            alert('Venta realizada con éxito');
+        } catch (error) {
+            console.error('Error al procesar venta:', error);
+            alert('Error al procesar venta: ' + error.message);
+        }
     }
 }
 
 // Inicialización
 const productoManager = new ProductoManager();
 const ventaManager = productoManager.ventaManager;
+
+// Exponer al ámbito global
+window.productoManager = productoManager;
+window.ventaManager = ventaManager;
+
+// Mostrar la sección de ventas al iniciar la aplicación
+mostrarVentasInicial();
